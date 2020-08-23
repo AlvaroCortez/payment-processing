@@ -1,10 +1,8 @@
 package com.payment.processing.jdbc;
 
+import com.payment.processing.configuration.DataSourceProperties;
 import com.payment.processing.model.Payment;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,23 +13,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.isNull;
 
 @Service
 @AllArgsConstructor
 public class PaymentProcessingDaoImpl implements PaymentProcessingDao {
-    private static final int NUMBER_OF_DATABASES = 3;
+//    private static final int NUMBER_OF_DATABASES = 3;
 
-    @Autowired
-    @Qualifier("firstJdbcTemplate")
-    private final JdbcTemplate firstJdbcTemplate;
-    @Autowired
-    @Qualifier("secondaryJdbcTemplate")
-    private final JdbcTemplate secondaryJdbcTemplate;
-    @Autowired
-    @Qualifier("thirdJdbcTemplate")
-    private final JdbcTemplate thirdJdbcTemplate;
+//    @Autowired
+//    @Qualifier("firstJdbcTemplate")
+//    private final JdbcTemplate firstJdbcTemplate;
+//    @Autowired
+//    @Qualifier("secondaryJdbcTemplate")
+//    private final JdbcTemplate secondaryJdbcTemplate;
+//    @Autowired
+//    @Qualifier("thirdJdbcTemplate")
+//    private final JdbcTemplate thirdJdbcTemplate;
+    private final DataSourceProperties dataSourceProperties;
 
     final String selectTotalAmount = "SELECT SUM(amount) FROM PAYMENT WHERE sender = ?";
     final String insertPayment = "INSERT INTO PAYMENT (sender, receiver, amount) VALUES (?, ?, ?)";
@@ -39,37 +36,36 @@ public class PaymentProcessingDaoImpl implements PaymentProcessingDao {
     @Override
     @Transactional
     public void uploadPayment(List<Payment> payments) {
-        final boolean violatedPayment = payments.stream()
-                .anyMatch(payment -> isNull(payment.getSender()) || isNull(payment.getReceiver()) || isNull(payment.getAmount()));
-        if (violatedPayment) {
-            throw new IllegalArgumentException("There is should not be payment with empty sender, receiver or amount");
-        }
-
         final Map<Integer, List<Payment>> dbPayments = payments.stream()
                 .collect(Collectors.groupingBy(payment -> getDatabaseNumber(payment.getSender())));
         //todo replace 0 1 2
-        final List<Payment> firstDbPayments = dbPayments.getOrDefault(0, emptyList());
-        final List<Payment> secondDbPayments = dbPayments.getOrDefault(1, emptyList());
-        final List<Payment> thirdDbPayments = dbPayments.getOrDefault(2, emptyList());
+//        final List<Payment> firstDbPayments = dbPayments.getOrDefault(0, emptyList());
+//        final List<Payment> secondDbPayments = dbPayments.getOrDefault(1, emptyList());
+//        final List<Payment> thirdDbPayments = dbPayments.getOrDefault(2, emptyList());
 
-        firstJdbcTemplate.batchUpdate(insertPayment, firstDbPayments, firstDbPayments.size(), paymentStatementSetter());
-        secondaryJdbcTemplate.batchUpdate(insertPayment, secondDbPayments, secondDbPayments.size(), paymentStatementSetter());
-        thirdJdbcTemplate.batchUpdate(insertPayment, thirdDbPayments, thirdDbPayments.size(), paymentStatementSetter());
+        dbPayments.keySet().forEach(dbNumber -> dataSourceProperties.getDbNumberJdbcTemplate()
+                .get(dbNumber).batchUpdate(insertPayment, dbPayments.get(dbNumber), dbPayments.get(dbNumber).size(), paymentStatementSetter()));
+
+//        firstJdbcTemplate.batchUpdate(insertPayment, firstDbPayments, firstDbPayments.size(), paymentStatementSetter());
+//        secondaryJdbcTemplate.batchUpdate(insertPayment, secondDbPayments, secondDbPayments.size(), paymentStatementSetter());
+//        thirdJdbcTemplate.batchUpdate(insertPayment, thirdDbPayments, thirdDbPayments.size(), paymentStatementSetter());
     }
 
     @Override
     public BigDecimal getTotalAmount(String sender) {
         final int databaseNumber = getDatabaseNumber(sender);
-        switch (databaseNumber) {
-            case 0:
-                return firstJdbcTemplate.queryForObject(selectTotalAmount, BigDecimal.class, sender);
-            case 1:
-                return secondaryJdbcTemplate.queryForObject(selectTotalAmount, BigDecimal.class, sender);
-            case 2:
-                return thirdJdbcTemplate.queryForObject(selectTotalAmount, BigDecimal.class, sender);
-            default:
-                throw new IllegalArgumentException("Unexpected database number");
-        }
+        return dataSourceProperties.getDbNumberJdbcTemplate().get(databaseNumber).queryForObject(selectTotalAmount, BigDecimal.class, sender);
+//        switch (databaseNumber) {
+//            case 0:
+//                return firstJdbcTemplate.queryForObject(selectTotalAmount, BigDecimal.class, sender);
+//            case 1:
+//                return secondaryJdbcTemplate.queryForObject(selectTotalAmount, BigDecimal.class, sender);
+//            case 2:
+//                return thirdJdbcTemplate.queryForObject(selectTotalAmount, BigDecimal.class, sender);
+//            default:
+//                throw new IllegalArgumentException("Unexpected database number");
+//        }
+//        return null;
     }
 
     ParameterizedPreparedStatementSetter<Payment> paymentStatementSetter() {
@@ -81,6 +77,6 @@ public class PaymentProcessingDaoImpl implements PaymentProcessingDao {
     }
 
     private int getDatabaseNumber(String sender) {
-        return abs(sender.hashCode() % NUMBER_OF_DATABASES);
+        return abs(sender.hashCode() % dataSourceProperties.getDatabaseCount());
     }
 }
