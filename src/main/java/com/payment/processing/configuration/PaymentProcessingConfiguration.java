@@ -49,11 +49,6 @@ public class PaymentProcessingConfiguration {
         return new JdbcTemplate(firstDataSource());
     }
 
-//    @Bean("firstTx")
-//    public PlatformTransactionManager firstPlatformTransactionManager(@Qualifier("firstDataSource") DataSource dataSource) {
-//        return new DataSourceTransactionManager(dataSource);
-//    }
-
     @Bean("firstTx")
     public PlatformTransactionManager firstPlatformTransactionManager() {
         return new DataSourceTransactionManager(firstDataSource());
@@ -70,17 +65,11 @@ public class PaymentProcessingConfiguration {
         return new JdbcTemplate(secondaryDataSource());
     }
 
-//    @Bean("secondaryTx")
-//    public PlatformTransactionManager secondaryPlatformTransactionManager(@Qualifier("secondaryDataSource") DataSource dataSource) {
-//        return new DataSourceTransactionManager(dataSource);
-//    }
-
     @Bean("secondaryTx")
     public PlatformTransactionManager secondaryPlatformTransactionManager() {
         return new DataSourceTransactionManager(secondaryDataSource());
     }
 
-//    @Bean(name = "chainedTransactionManager")
     @Bean
     @Primary
     public ChainedTransactionManager transactionManager() {
@@ -99,11 +88,6 @@ public class PaymentProcessingConfiguration {
     public JdbcTemplate thirdJdbcTemplate() {
         return new JdbcTemplate(thirdDataSource());
     }
-
-//    @Bean("thirdTx")
-//    public PlatformTransactionManager thirdPlatformTransactionManager(@Qualifier("thirdDataSource") DataSource dataSource) {
-//        return new DataSourceTransactionManager(dataSource);
-//    }
 
     @Bean("thirdTx")
     public PlatformTransactionManager thirdPlatformTransactionManager() {
