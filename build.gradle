@@ -12,9 +12,6 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
-//    testCompileOnly {
-//        extendsFrom annotationProcessor
-//    }
 }
 
 repositories {
@@ -22,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+//    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.flywaydb:flyway-core'
@@ -36,9 +33,6 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
-
-//    testCompileOnly 'org.projectlombok:lombok'
-//    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 test {

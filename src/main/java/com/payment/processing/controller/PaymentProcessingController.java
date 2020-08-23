@@ -4,7 +4,6 @@ import com.payment.processing.exception.BadArgumentException;
 import com.payment.processing.jdbc.PaymentProcessingDao;
 import com.payment.processing.model.Payment;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -19,7 +18,6 @@ public class PaymentProcessingController {
 
     private final PaymentProcessingDao paymentProcessingDao;
 
-    //todo pathVariable or pathParam?
     @GetMapping("/totalAmount/{sender}")
     public BigDecimal getTotalAmount(@PathVariable("sender") String sender) {
         return paymentProcessingDao.getTotalAmount(sender);
