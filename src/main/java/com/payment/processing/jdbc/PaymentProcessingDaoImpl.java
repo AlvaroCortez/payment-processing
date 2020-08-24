@@ -46,9 +46,9 @@ public class PaymentProcessingDaoImpl implements PaymentProcessingDao {
                 try {
                     rollbackTransactions(connections);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException("Something went wrong when rollback transactions");
                 }
-                throwables.printStackTrace();
+                throw new RuntimeException("Something went wrong when add payments");
             }
         });
 
@@ -77,7 +77,7 @@ public class PaymentProcessingDaoImpl implements PaymentProcessingDao {
             }
             return totalAmount;
         } catch (SQLException e) {
-            throw new RuntimeException("Something went wrong");
+            throw new RuntimeException("Something went wrong when get total amount");
         }
     }
 
